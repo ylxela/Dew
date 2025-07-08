@@ -162,7 +162,8 @@ def update_animation():
 
     elif check == 1:  # Panic state
         frame = panic[cycle]
-        cycle = (cycle + 1) % len(panic)
+        cycle = (cycle + 1)
+        if (cycle > 4): cycle = 3
 
     elif check == 2:  # Water state
         frame = water[cycle]
