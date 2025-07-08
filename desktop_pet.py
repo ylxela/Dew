@@ -1,5 +1,10 @@
 import tkinter as tk
+from tkinter import ttk, messagebox  # ttk for progress bar
 import random
+import os
+from datetime import datetime
+
+from config_manager import ConfigManager
 
 # ==============================================================================
 # CONFIGURATION AND INITIAL SETUP
@@ -196,6 +201,101 @@ def update_animation():
 # WINDOW AND GRAPHICS SETUP
 # ==============================================================================
 
+# --------------------------------------------------------------
+# CONFIG MANAGER
+# --------------------------------------------------------------
+config = ConfigManager()
+
+# --------------------------------------------------------------
+# Helper GUI WINDOWS
+# --------------------------------------------------------------
+
+def open_setup_window():
+    """Popup window to change daily goal and sip size."""
+    win = tk.Toplevel(window)
+    win.title("Dew - Setup")
+    win.attributes("-topmost", True)
+
+    tk.Label(win, text="Daily Goal (ml)").grid(row=0, column=0, padx=10, pady=5)
+    goal_var = tk.StringVar(value=str(config.daily_goal))
+    tk.Entry(win, textvariable=goal_var, width=10).grid(row=0, column=1, padx=10, pady=5)
+
+    tk.Label(win, text="Sip Amount (ml)").grid(row=1, column=0, padx=10, pady=5)
+    sip_var = tk.StringVar(value=str(config.sip_amount))
+    tk.Entry(win, textvariable=sip_var, width=10).grid(row=1, column=1, padx=10, pady=5)
+
+    def save():
+        try:
+            config.daily_goal = int(goal_var.get())
+            config.sip_amount = int(sip_var.get())
+            messagebox.showinfo("Saved", "Preferences updated.")
+            win.destroy()
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid numbers.")
+
+    ttk.Button(win, text="Save", command=save).grid(row=2, column=0, columnspan=2, pady=10)
+
+
+def open_logging_window():
+    """Popup near Dewey to log water intake and show progress."""
+    # Determine popup position relative to pet
+    popup = tk.Toplevel(window)
+    popup.title("Log Water")
+    popup.attributes("-topmost", True)
+    popup.geometry(f"200x120+{x+110}+{y}")
+    tk.Label(popup, text=f"Log {config.sip_amount} ml water?").pack(pady=5)
+
+    progress = ttk.Progressbar(popup, maximum=config.daily_goal, value=config.current_intake, length=160)
+    progress.pack(pady=5)
+
+    prog_label = tk.Label(popup, text=f"{config.current_intake}/{config.daily_goal} ml")
+    prog_label.pack()
+
+    def log_water():
+        config.add_intake(config.sip_amount)
+        progress["value"] = config.current_intake
+        prog_label.config(text=f"{config.current_intake}/{config.daily_goal} ml")
+        if config.current_intake >= config.daily_goal:
+            messagebox.showinfo("Congrats!", "You've met today's hydration goal!")
+        popup.destroy()
+
+    ttk.Button(popup, text="Drink", command=log_water).pack(pady=5)
+
+
+# --------------------------------------------------------------
+# MOUSE INTERACTION (CLICK VS DRAG)
+# --------------------------------------------------------------
+click_start_pos = (0, 0)
+potential_drag = False
+
+
+def on_button_press(event):
+    global click_start_pos, potential_drag
+    click_start_pos = (event.x_root, event.y_root)
+    potential_drag = True
+
+
+def on_mouse_move(event):
+    global potential_drag, is_dragging
+    if potential_drag:
+        dx = abs(event.x_root - click_start_pos[0])
+        dy = abs(event.y_root - click_start_pos[1])
+        if dx > 5 or dy > 5:
+            potential_drag = False
+            start_drag(event)
+    if is_dragging:
+        drag_pet(event)
+
+
+def on_button_release(event):
+    global potential_drag, is_dragging
+    if is_dragging:
+        stop_drag(event)
+    elif potential_drag:
+        # Treat as click — open logger
+        open_logging_window()
+    potential_drag = False
+
 # Create main window
 window = tk.Tk()
 
@@ -223,19 +323,25 @@ label = tk.Label(window, bd=0, bg='black')
 label.pack()
 
 # Bind mouse events for drag and drop functionality
-label.bind("<Button-1>", start_drag)        # Left mouse button press
-label.bind("<B1-Motion>", drag_pet)         # Mouse movement while button held
-label.bind("<ButtonRelease-1>", stop_drag)  # Left mouse button release
+label.bind("<Button-1>", on_button_press)        # Left mouse button press
+label.bind("<B1-Motion>", on_mouse_move)         # Mouse movement while button held
+label.bind("<ButtonRelease-1>", on_button_release)  # Left mouse button release
 
 # Bind mouse events for hover functionality
 label.bind("<Enter>", start_hover)          # Mouse enters pet area
 label.bind("<Leave>", stop_hover)           # Mouse leaves pet area
+# Right-click to open settings
+label.bind("<Button-3>", lambda e: open_setup_window())
 
 # ==============================================================================
 # START THE PROGRAM
 # ==============================================================================
 
 window.geometry(f'100x100+{x}+{y}')
+
+# Auto-open setup on first launch
+if config.data.get("last_reset_date") is None:
+    window.after(500, open_setup_window)
 
 # Start the animation loop
 window.after(1, update_animation)
