@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cup Shape</title>
+  <style>
+    body {
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .cup {
+      width: 120px;
+      height: 150px;
+      background: #fff;
+      border: 5px solid #999;
+      border-radius: 0 0 60px 60px;
+      position: relative;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .cup::before {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: 30px;
+      width: 40px;
+      height: 80px;
+      border: 5px solid #999;
+      border-radius: 50%;
+      border-left: none;
+      background: none;
+    }
+
+    .cup::after {
+      content: "";
+      position: absolute;
+      top: -15px;
+      left: 10px;
+      width: 100px;
+      height: 20px;
+      background: #ccc;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="cup"></div>
+</body>
+</html>

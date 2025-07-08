@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 30px;
+      background: #f0f8ff;
+    }
+    #hamster {
+      width: 150px;
+      margin-bottom: 20px;
+    }
+    #waterCount {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #4CAF50;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    html, body {
+      overflow: hidden;
+      background: transparent;
+    }
+    body {
+      pointer-events: none;
+      -webkit-app-region: drag;
+    }
+    #hamster {
+      pointer-events: auto;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+  <div height="500px"></div>
+  <h1>🐹 Hamster Water Pet</h1>
+  <img id="hamster" src="https://placehold.co/150x150/ffce00/000000?text=%F0%9F%90%B9" />
+  
+  <div id="controls" style="display:none">
+    <div id="waterCount">Water intake: 0 cups</div>
+    <button id="drinkBtn">Drink Water 💧</button>
+    <input type="range" id="bottleSlider" min="0" max="10" value="0" />
+  </div>
+
+  <img id="bottle" src="https://placehold.co/80x120/00d4ff/000000?text=%F0%9F%92%A7" draggable="true" style="margin-top:20px;width:80px;"/>
+
+  <script src="renderer.js">
+    let count = 0;
+    const waterCount = document.getElementById('waterCount');
+    const drinkBtn = document.getElementById('drinkBtn');
+
+    drinkBtn.addEventListener('click', () => {
+      count++;
+      waterCount.textContent = `Water intake: ${count} cup${count > 1 ? 's' : ''}`;
+      
+      // TODO: Add hamster mood or animations here
+      
+
+    });
+  </script>
+
+</body>
+</html>
