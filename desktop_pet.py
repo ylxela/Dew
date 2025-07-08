@@ -1,132 +1,243 @@
 import tkinter as tk
 import random
-import time
 
-class DesktopPet:
-    def __init__(self):
-        # Create the main window
-        self.window = tk.Tk()
-        self.window.title("Desktop Pet")
+# ==============================================================================
+# CONFIGURATION AND INITIAL SETUP
+# ==============================================================================
 
-        # Window configuration for transparency and always on top
-        self.window.config(highlightbackground='black')
-        self.window.overrideredirect(True)  # Remove window decorations
-        self.window.wm_attributes('-transparentcolor', 'black')  # Make black transparent
-        self.window.wm_attributes('-topmost', True)  # Keep on top
+# Pet position and animation variables
+x = 1400  # Initial x position of the pet
+y = 1050  # Initial y position of the pet
+cycle = 0  # Current frame index for animations
+check = 0  # Current state/behavior of the pet (0=idle, 1=panic, 2=water)
 
-        # Pet position and movement variables
-        self.x = 200
-        self.y = 500
-        self.direction = 1  # 1 for right, -1 for left
-        self.speed = 2
+# Interaction state variables
+is_dragging = False  # Flag to track if pet is being dragged
+is_hovering = False  # Flag to track if mouse is hovering over pet
+drag_start_x = 0  # Starting x position for drag
+drag_start_y = 0  # Starting y position for drag
 
-        # Get screen dimensions
-        self.screen_width = self.window.winfo_screenwidth()
-        self.screen_height = self.window.winfo_screenheight()
+# Remove the old behavior number ranges since we're not using random events anymore
+# Define animation frame counts for easy reference
+IDLE_FRAMES = 3
+PANIC_FRAMES = 3
+WATER_FRAMES = 3  # This will be updated when we load the actual frames
 
-        # Load your PNG image (replace with your image path)
-        try:
-            self.pet_image = tk.PhotoImage(file="pet.png")  # Replace with your PNG file path
-        except:
-            # If no image found, create a simple colored rectangle as placeholder
-            self.pet_image = tk.PhotoImage(width=50, height=50)
-            self.pet_image.put("orange", to=(0, 0, 50, 50))
+# Image path for GIF files (using raw string to handle backslashes)
+impath = r'C:\Users\alex3\Documents\DevsocHackathon\\'
 
-        # Create label to display the pet
-        self.label = tk.Label(self.window, image=self.pet_image, bd=0, bg='black')
-        self.label.pack()
+# ==============================================================================
+# MOUSE INTERACTION FUNCTIONS
+# ==============================================================================
 
-        # Bind click event to make pet draggable
-        self.label.bind("<Button-1>", self.start_drag)
-        self.label.bind("<B1-Motion>", self.drag)
+def start_drag(event):
+    """
+    Initiates drag operation when mouse button is pressed on the pet.
 
-        # Variables for dragging
-        self.drag_start_x = 0
-        self.drag_start_y = 0
+    Args:
+        event: Tkinter event object containing mouse coordinates
+    """
+    global is_dragging, drag_start_x, drag_start_y, check, cycle
 
-        # Start the pet's behavior
-        self.behavior_loop()
+    is_dragging = True
+    drag_start_x = event.x
+    drag_start_y = event.y
 
-    def start_drag(self, event):
-        """Start dragging the pet"""
-        self.drag_start_x = event.x
-        self.drag_start_y = event.y
+    # Switch to panic state when dragging starts
+    check = 1  # Panic state
+    cycle = 0  # Reset animation cycle
+    print("Dragging started - panic mode!")
 
-    def drag(self, event):
-        """Drag the pet around"""
-        x = self.window.winfo_pointerx() - self.drag_start_x
-        y = self.window.winfo_pointery() - self.drag_start_y
-        self.window.geometry(f"+{x}+{y}")
-        self.x = x
-        self.y = y
 
-    def move_pet(self):
-        """Move the pet across the screen"""
-        self.x += self.direction * self.speed
+def drag_pet(event):
+    """
+    Handles pet movement during drag operation.
 
-        # Bounce off screen edges
-        if self.x <= 0:
-            self.direction = 1  # Move right
-        elif self.x >= self.screen_width - 100:
-            self.direction = -1  # Move left
+    Args:
+        event: Tkinter event object containing mouse coordinates
+    """
+    global x, y, is_dragging
 
-        # Keep pet on screen vertically
-        if self.y < 0:
-            self.y = 0
-        elif self.y > self.screen_height - 100:
-            self.y = self.screen_height - 100
+    if is_dragging:
+        # Calculate new position based on mouse movement
+        new_x = window.winfo_pointerx() - drag_start_x
+        new_y = window.winfo_pointery() - drag_start_y
 
-        # Update window position
-        self.window.geometry(f"+{self.x}+{self.y}")
+        # Update pet position variables - THIS IS THE KEY FIX
+        x = new_x
+        y = new_y
 
-    def random_behavior(self):
-        """Add some random behaviors"""
-        action = random.choice(['move', 'idle', 'jump', 'change_direction'])
+        # Move the window to new position
+        window.geometry(f'100x100+{new_x}+{new_y}')
 
-        if action == 'move':
-            self.move_pet()
-        elif action == 'idle':
-            pass  # Do nothing, just stay in place
-        elif action == 'jump':
-            # Simple jump animation
-            original_y = self.y
-            self.y -= 20
-            self.window.geometry(f"+{self.x}+{self.y}")
-            self.window.after(200, lambda: self.return_from_jump(original_y))
-        elif action == 'change_direction':
-            self.direction *= -1  # Reverse direction
 
-    def return_from_jump(self, original_y):
-        """Return from jump to original position"""
-        self.y = original_y
-        self.window.geometry(f"+{self.x}+{self.y}")
+def stop_drag(event):
+    """
+    Ends drag operation when mouse button is released.
 
-    def behavior_loop(self):
-        """Main behavior loop"""
-        self.random_behavior()
-        # Schedule next behavior (every 500ms)
-        self.window.after(500, self.behavior_loop)
+    Args:
+        event: Tkinter event object
+    """
+    global is_dragging, check, cycle
 
-    def run(self):
-        """Start the pet"""
-        self.window.mainloop()
+    if is_dragging:
+        is_dragging = False
+        print("Dragging stopped - returning to normal behavior")
 
-# Instructions for use:
-# 1. Save this code as 'desktop_pet.py'
-# 2. Find a PNG image of your pet (cat, dog, etc.) and save it as 'pet.png' in the same folder
-# 3. Run the script: python desktop_pet.py
-#
-# TO HIDE THE TERMINAL:
-# Method 1: Save as .pyw file instead of .py (Windows only)
-# Method 2: Use pythonw instead of python: pythonw desktop_pet.py
-# Method 3: Create a batch file or shortcut (see below)
-#
-# Features:
-# - Click and drag to move the pet
-# - Pet will move around randomly
-# - Pet bounces off screen edges
-# - Transparent background
-# - Always stays on top of other windows
+        # Reset animation cycle
+        cycle = 0
 
-pet = DesktopPet()
-pet.run()
+
+def start_hover(event):
+    """
+    Called when mouse enters the pet area.
+
+    Args:
+        event: Tkinter event object
+    """
+    global is_hovering, check, cycle
+
+    if not is_dragging:  # Only switch to hover if not dragging
+        is_hovering = True
+        check = 2  # Water state
+        cycle = 0  # Reset animation cycle
+        print("Mouse hover started - water mode!")
+
+
+def stop_hover(event):
+    """
+    Called when mouse leaves the pet area.
+
+    Args:
+        event: Tkinter event object
+    """
+    global is_hovering, check, cycle
+
+    if not is_dragging:  # Only switch to idle if not dragging
+        is_hovering = False
+        check = 0  # Idle state
+        cycle = 0  # Reset animation cycle
+        print("Mouse hover stopped - idle mode!")
+
+
+# ==============================================================================
+# BEHAVIOR CONTROL FUNCTIONS
+# ==============================================================================
+
+def determine_behavior():
+    """
+    Determines the pet's behavior based on current interaction state.
+
+    Returns:
+        int: Behavior state (0=idle, 1=panic, 2=water)
+    """
+    global is_dragging, is_hovering
+
+    if is_dragging:
+        return 1  # Panic state
+    elif is_hovering:
+        return 2  # Water state
+    else:
+        return 0  # Idle state
+
+
+def update_animation():
+    """
+    Main update function that handles animation frame updates and pet behavior.
+    """
+    global cycle, check, is_dragging, x, y
+
+    # Determine current behavior based on interaction state
+    new_check = determine_behavior()
+
+    # If behavior changed, reset animation cycle
+    if new_check != check:
+        cycle = 0
+        check = new_check
+
+    # Select appropriate animation frame and advance cycle
+    if check == 0:  # Idle state
+        frame = idle[cycle]
+        cycle = (cycle + 1) % len(idle)
+
+    elif check == 1:  # Panic state
+        frame = panic[cycle]
+        cycle = (cycle + 1) % len(panic)
+
+    elif check == 2:  # Water state
+        frame = water[cycle]
+        cycle = (cycle + 1) % len(water)
+
+    else:  # Fallback to idle
+        frame = idle[0]
+        check = 0
+        cycle = 0
+
+    # Update window position using global coordinates (dragging updates this)
+    if not is_dragging:
+        window.geometry(f'100x100+{x}+{y}')
+
+    # Always update the image
+    label.configure(image=frame)
+
+    # Schedule next update - different speeds for different animations
+    if check == 0:  # Idle - slower animation
+        window.after(400, update_animation)
+    elif check == 1:  # Panic - faster animation
+        window.after(100, update_animation)
+    elif check == 2:  # Water - medium speed animation
+        window.after(150, update_animation)
+    else:
+        window.after(400, update_animation)  # Default fallback
+
+
+# ==============================================================================
+# WINDOW AND GRAPHICS SETUP
+# ==============================================================================
+
+# Create main window
+window = tk.Tk()
+
+try:
+    # Load all GIF animations by extracting individual frames
+    idle = [tk.PhotoImage(file=impath + 'idle.gif', format='gif -index %i' % (i)) for i in range(3)]
+    panic = [tk.PhotoImage(file=impath + 'panic.gif', format='gif -index %i' % (i)) for i in range(3)]
+    water = [tk.PhotoImage(file=impath + 'water.gif', format='gif -index %i' % (i)) for i in range(3)]
+    print("GIF files loaded successfully!")
+except Exception as e:
+    print(f"Error loading GIF files: {e}")
+    print("Make sure the GIF files exist in the specified directory.")
+    exit()
+
+# Configure window appearance
+window.config(highlightbackground='black')  # Set background color
+window.overrideredirect(True)  # Remove window decorations
+window.wm_attributes('-transparentcolor', 'black')  # Make black pixels transparent
+
+# FIXED: Make window always stay on top of other applications
+window.wm_attributes('-topmost', True)
+
+# Create label to display the pet animations
+label = tk.Label(window, bd=0, bg='black')
+label.pack()
+
+# Bind mouse events for drag and drop functionality
+label.bind("<Button-1>", start_drag)        # Left mouse button press
+label.bind("<B1-Motion>", drag_pet)         # Mouse movement while button held
+label.bind("<ButtonRelease-1>", stop_drag)  # Left mouse button release
+
+# Bind mouse events for hover functionality
+label.bind("<Enter>", start_hover)          # Mouse enters pet area
+label.bind("<Leave>", stop_hover)           # Mouse leaves pet area
+
+# ==============================================================================
+# START THE PROGRAM
+# ==============================================================================
+
+window.geometry(f'100x100+{x}+{y}')
+
+# Start the animation loop
+window.after(1, update_animation)
+
+# Start the main GUI loop
+window.mainloop()
