@@ -213,17 +213,17 @@ def open_setup_window():
     win.attributes("-topmost", True)
 
     tk.Label(win, text="Daily Goal (ml)").grid(row=0, column=0, padx=10, pady=5)
-    goal_var = tk.StringVar(value=str(config.daily_goal))
+    goal_var = tk.StringVar(value=str(config.dailyGoal))
     tk.Entry(win, textvariable=goal_var, width=10).grid(row=0, column=1, padx=10, pady=5)
 
     tk.Label(win, text="Sip Amount (ml)").grid(row=1, column=0, padx=10, pady=5)
-    sip_var = tk.StringVar(value=str(config.sip_amount))
+    sip_var = tk.StringVar(value=str(config.sipAmount))
     tk.Entry(win, textvariable=sip_var, width=10).grid(row=1, column=1, padx=10, pady=5)
 
     def save():
         try:
-            config.daily_goal = int(goal_var.get())
-            config.sip_amount = int(sip_var.get())
+            config.dailyGoal = int(goal_var.get())
+            config.sipAmount = int(sip_var.get())
             messagebox.showinfo("Saved", "Preferences updated.")
             win.destroy()
         except ValueError:
@@ -239,19 +239,19 @@ def open_logging_window():
     popup.title("Log Water")
     popup.attributes("-topmost", True)
     popup.geometry(f"200x120+{x+110}+{y}")
-    tk.Label(popup, text=f"Log {config.sip_amount} ml water?").pack(pady=5)
+    tk.Label(popup, text=f"Log {config.sipAmount} ml water?").pack(pady=5)
 
-    progress = ttk.Progressbar(popup, maximum=config.daily_goal, value=config.current_intake, length=160)
+    progress = ttk.Progressbar(popup, maximum=config.dailyGoal, value=config.currentIntake, length=160)
     progress.pack(pady=5)
 
-    prog_label = tk.Label(popup, text=f"{config.current_intake}/{config.daily_goal} ml")
+    prog_label = tk.Label(popup, text=f"{config.currentIntake}/{config.dailyGoal} ml")
     prog_label.pack()
 
     def log_water():
-        config.add_intake(config.sip_amount)
-        progress["value"] = config.current_intake
-        prog_label.config(text=f"{config.current_intake}/{config.daily_goal} ml")
-        if config.current_intake >= config.daily_goal:
+        config.addIntake(config.sipAmount)
+        progress["value"] = config.currentIntake
+        prog_label.config(text=f"{config.currentIntake}/{config.dailyGoal} ml")
+        if config.currentIntake >= config.dailyGoal:
             messagebox.showinfo("Congrats!", "You've met today's hydration goal!")
         popup.destroy()
 
