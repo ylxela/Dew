@@ -2,36 +2,32 @@ class BehaviorManager:
     """Manages pet behavior states and transitions."""
 
     def __init__(self):
-        self.is_dragging = False
-        self.is_hovering = False
+        self.isDragging = False
+        self.isHovering = False
 
     def determine_behavior(self):
-        """Determine current behavior state based on interactions."""
-        if self.is_dragging:
+        """Return current behavior state based on interactions."""
+        if self.isDragging:
             return 1  # Panic state
-        elif self.is_hovering:
-            return 2  # Water state
+        elif self.isHovering:
+            return 2  # Hover state
         else:
             return 0  # Idle state
 
     def start_drag(self):
         """Start dragging behavior."""
-        self.is_dragging = True
-        print("Dragging started - panic mode!")
+        self.isDragging = True
 
     def stop_drag(self):
         """Stop dragging behavior."""
-        self.is_dragging = False
-        print("Dragging stopped - returning to normal behavior")
+        self.isDragging = False
 
     def start_hover(self):
         """Start hover behavior."""
-        if not self.is_dragging:
-            self.is_hovering = True
-            print("Mouse hover started - water mode!")
+        if not self.isDragging:
+            self.isHovering = True
 
     def stop_hover(self):
         """Stop hover behavior."""
-        if not self.is_dragging:
-            self.is_hovering = False
-            print("Mouse hover stopped - idle mode!")
+        if not self.isDragging:
+            self.isHovering = False

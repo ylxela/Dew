@@ -1,10 +1,11 @@
 import tkinter as tk
 
 class AnimationManager:
+    """Manages pet animations and frame cycling."""
 
     def __init__(self):
         self.cycle = 0
-        self.current_state = 0  # 0=idle, 1=panic, 2=water
+        self.currentState = 0  # 0=idle, 1=panic, 2=hover
 
         # Frame counts for each animation
         self.IDLE_FRAMES = 3
@@ -12,57 +13,57 @@ class AnimationManager:
         self.HOVER_FRAMES = 3
 
         # Animation frames
-        self.idle_frames = []
-        self.panic_frames = []
-        self.water_frames = []
+        self.idleFrames = []
+        self.panicFrames = []
+        self.hoverFrames = []
 
     def load_animations(self):
+        """Load animation frames from GIF files."""
         try:
-            self.idle_frames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i)
+            self.idleFrames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i)
                                for i in range(self.IDLE_FRAMES)]
-            self.panic_frames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i)
+            self.panicFrames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i)
                                 for i in range(self.PANIC_FRAMES)]
-            self.water_frames = [tk.PhotoImage(file='water.gif', format='gif -index %i' % i)
+            self.hoverFrames = [tk.PhotoImage(file='hover.gif', format='gif -index %i' % i)
                                 for i in range(self.HOVER_FRAMES)]
-            print("GIF files loaded successfully!")
         except Exception as e:
-            print(f"Error loading GIF files: {e}")
-            print("Make sure the GIF files exist in the specified directory.")
-            exit()
+            raise FileNotFoundError(f"Error loading GIF files: {e}. Make sure the GIF files exist in the directory.")
 
     def get_frame_dimensions(self):
-        return self.idle_frames[0].width(), self.idle_frames[0].height()
+        """Return dimensions of animation frames."""
+        return self.idleFrames[0].width(), self.idleFrames[0].height()
 
     def get_current_frame(self):
-        if self.current_state == 0:  # Idle
-            frame = self.idle_frames[self.cycle]
-            self.cycle = (self.cycle + 1) % len(self.idle_frames)
-        elif self.current_state == 1:  # Panic
-            frame = self.panic_frames[self.cycle]
+        """Get current animation frame based on state and cycle."""
+        if self.currentState == 0:  # Idle
+            frame = self.idleFrames[self.cycle]
+            self.cycle = (self.cycle + 1) % len(self.idleFrames)
+        elif self.currentState == 1:  # Panic
+            frame = self.panicFrames[self.cycle]
             self.cycle = (self.cycle + 1)
             if self.cycle > 4:
                 self.cycle = 3
-        elif self.current_state == 2:  # Water
-            frame = self.water_frames[self.cycle]
-            self.cycle = (self.cycle + 1) % len(self.water_frames)
-        else:  # Fallback
-            frame = self.idle_frames[0]
-            self.current_state = 0
+        elif self.currentState == 2:  # Hover
+            frame = self.hoverFrames[self.cycle]
+            self.cycle = (self.cycle + 1) % len(self.hoverFrames)
+        else:  # Fallback to idle
+            frame = self.idleFrames[0]
+            self.currentState = 0
             self.cycle = 0
 
         return frame
 
-    def set_state(self, new_state):
+    def set_state(self, newState):
         """Change animation state and reset cycle if needed."""
-        if new_state != self.current_state:
-            self.current_state = new_state
+        if newState != self.currentState:
+            self.currentState = newState
             self.cycle = 0
 
     def get_animation_speed(self):
-        """Get animation speed based on current state."""
-        speed_map = {
+        """Return animation speed based on current state."""
+        speedMap = {
             0: 400,  # Idle - slower
             1: 100,  # Panic - faster
-            2: 150   # Water - medium
+            2: 150   # Hover - medium
         }
-        return speed_map.get(self.current_state, 400)
+        return speedMap.get(self.currentState, 400)
