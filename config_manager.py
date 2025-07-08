@@ -1,77 +1,76 @@
 import json
 import os
-from datetime import datetime, date
+from datetime import date
 
+DEFAULT_DAILY_GOAL = 2000
+DEFAULT_SIP_AMOUNT = 250
 
 class ConfigManager:
-    """Handle persistent configuration and daily hydration data."""
-
     DEFAULTS = {
-        "daily_goal": 2000,
-        "sip_amount": 250,
-        "current_intake": 0,
-        "last_reset_date": None,
+        "dailyGoal": DEFAULT_DAILY_GOAL,
+        "sipAmount": DEFAULT_SIP_AMOUNT,
+        "currentIntake": 0,
+        "lastResetDate": None,
         "streak": 0
     }
 
     def __init__(self, path: str = "config.json") -> None:
         self.path = os.path.join(os.path.dirname(__file__), path)
         self.data = self.DEFAULTS.copy()
-        self._load()
-        self._reset_if_new_day()
-
-    # Properties for convenient access
-    @property
-    def daily_goal(self) -> int:
-        return self.data["daily_goal"]
-
-    @daily_goal.setter
-    def daily_goal(self, value: int):
-        self.data["daily_goal"] = int(value)
-        self._save()
+        self.load()
+        self.resetOnNewDay()
 
     @property
-    def sip_amount(self) -> int:
-        return self.data["sip_amount"]
+    def dailyGoal(self) -> int:
+        return self.data["dailyGoal"]
 
-    @sip_amount.setter
-    def sip_amount(self, value: int):
-        self.data["sip_amount"] = int(value)
-        self._save()
+    @dailyGoal.setter
+    def dailyGoal(self, value: int):
+        self.data["dailyGoal"] = int(value)
+        self.save()
 
     @property
-    def current_intake(self) -> int:
-        return self.data["current_intake"]
+    def sipAmount(self) -> int:
+        return self.data["sipAmount"]
+
+    @sipAmount.setter
+    def sipAmount(self, value: int):
+        self.data["sipAmount"] = int(value)
+        self.save()
+
+    @property
+    def currentIntake(self) -> int:
+        return self.data["currentIntake"]
 
     @property
     def streak(self) -> int:
         return self.data["streak"]
 
-    def add_intake(self, amount: int):
+    def addIntake(self, amount: int):
         """Add water intake and save config."""
-        self.data["current_intake"] += amount
+        self.data["currentIntake"] += amount
         
-        self.data["current_intake"] = min(self.data["current_intake"], self.data["daily_goal"] * 2)
-        self._save()
+        self.data["currentIntake"] = min(self.data["currentIntake"], self.data["dailyGoal"] * 2)
+        self.save()
 
-    def _reset_if_new_day(self):
-        today_str = date.today().isoformat()
-        last_reset = self.data.get("last_reset_date")
-        if last_reset != today_str:
+    def resetOnNewDay(self):
+        todayStr = date.today().isoformat()
+        lastReset = self.data.get("lastResetDate")
+        if lastReset != todayStr:
             
-            if last_reset is not None and self.data.get("current_intake", 0) >= self.data["daily_goal"]:
+            if lastReset is not None and self.data.get("currentIntake", 0) >= self.data["dailyGoal"]:
                 self.data["streak"] += 1
             else:
                 
-                if last_reset is not None:
+                if lastReset is not None:
                     self.data["streak"] = 0
 
             
-            self.data["current_intake"] = 0
-            self.data["last_reset_date"] = today_str
-            self._save()
+            self.data["currentIntake"] = 0
+            self.data["lastResetDate"] = todayStr
+            self.save()
 
-    def _load(self):
+    def load(self):
         if os.path.exists(self.path):
             try:
                 with open(self.path, "r", encoding="utf-8") as fp:
@@ -81,11 +80,11 @@ class ConfigManager:
             except (json.JSONDecodeError, OSError):
                 
                 self.data = self.DEFAULTS.copy()
-                self._save()
+                self.save()
         else:
-            self._save()
+            self.save()
 
-    def _save(self):
+    def save(self):
         try:
             with open(self.path, "w", encoding="utf-8") as fp:
                 json.dump(self.data, fp, indent=2)
