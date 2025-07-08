@@ -49,7 +49,7 @@ class ConfigManager:
     def addIntake(self, amount: int):
         """Add water intake and save config."""
         self.data["currentIntake"] += amount
-        
+
         self.data["currentIntake"] = min(self.data["currentIntake"], self.data["dailyGoal"] * 2)
         self.save()
 
@@ -57,15 +57,15 @@ class ConfigManager:
         todayStr = date.today().isoformat()
         lastReset = self.data.get("lastResetDate")
         if lastReset != todayStr:
-            
+
             if lastReset is not None and self.data.get("currentIntake", 0) >= self.data["dailyGoal"]:
                 self.data["streak"] += 1
             else:
-                
+
                 if lastReset is not None:
                     self.data["streak"] = 0
 
-            
+
             self.data["currentIntake"] = 0
             self.data["lastResetDate"] = todayStr
             self.save()
@@ -75,10 +75,10 @@ class ConfigManager:
             try:
                 with open(self.path, "r", encoding="utf-8") as fp:
                     loaded = json.load(fp)
-                
+
                 self.data.update(loaded)
             except (json.JSONDecodeError, OSError):
-                
+
                 self.data = self.DEFAULTS.copy()
                 self.save()
         else:
