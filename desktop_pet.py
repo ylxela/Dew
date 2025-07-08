@@ -1,26 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox  # ttk for progress bar
-import random
-import os
-from datetime import datetime
+from configManager import ConfigManager
 
-from config_manager import ConfigManager
-
-# ==============================================================================
 # CONFIGURATION AND INITIAL SETUP
-# ==============================================================================
-
 # Pet position and animation variables
-x = 100  # Initial x position of the pet
-y = 150  # Initial y position of the pet
-cycle = 0  # Current frame index for animations
-check = 0  # Current state/behavior of the pet (0=idle, 1=panic, 2=water)
+x = 100
+y = 150
+cycle = 0
+check = 0
 
 # Interaction state variables
-is_dragging = False  # Flag to track if pet is being dragged
-is_hovering = False  # Flag to track if mouse is hovering over pet
-drag_start_x = 0  # Starting x position for drag
-drag_start_y = 0  # Starting y position for drag
+is_dragging = False
+is_hovering = False
+drag_start_x = 0
+drag_start_y = 0
 
 pet_width = 65  # Default width, will be updated
 pet_height = 64  # Default height, will be updated
