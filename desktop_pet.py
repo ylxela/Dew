@@ -4,7 +4,7 @@ import random
 import os
 from datetime import datetime
 
-from config_manager import ConfigManager
+from configManager import ConfigManager
 
 # ==============================================================================
 # CONFIGURATION AND INITIAL SETUP

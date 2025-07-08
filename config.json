@@ -1,11 +1,1 @@
-{
-  "dailyGoal": 2000,
-  "sipAmount": 250,
-  "currentIntake": 1250,
-  "lastResetDate": "2025-07-08",
-  "streak": 0,
-  "daily_goal": 2000,
-  "sip_amount": 250,
-  "current_intake": 750,
-  "last_reset_date": "2025-07-08"
-}
+{"dailyGoal": 2000, "sipAmount": 250, "currentIntake": 0, "lastResetDate": null, "streak": 0}
