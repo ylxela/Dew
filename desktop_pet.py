@@ -22,6 +22,9 @@ is_hovering = False  # Flag to track if mouse is hovering over pet
 drag_start_x = 0  # Starting x position for drag
 drag_start_y = 0  # Starting y position for drag
 
+pet_width = 65  # Default width, will be updated
+pet_height = 64  # Default height, will be updated
+
 # Remove the old behavior number ranges since we're not using random events anymore
 # Define animation frame counts for easy reference
 IDLE_FRAMES = 3
@@ -73,7 +76,7 @@ def drag_pet(event):
         y = new_y
 
         # Move the window to new position
-        window.geometry(f'100x100+{new_x}+{new_y}')
+        window.geometry(f'{pet_width}x{pet_height}+{new_x}+{new_y}')
 
 
 def stop_drag(event):
@@ -181,7 +184,7 @@ def update_animation():
 
     # Update window position using global coordinates (dragging updates this)
     if not is_dragging:
-        window.geometry(f'100x100+{x}+{y}')
+        window.geometry(f'{pet_width}x{pet_height}+{x}+{y}')
 
     # Always update the image
     label.configure(image=frame)
@@ -304,16 +307,19 @@ try:
     idle = [tk.PhotoImage(file=impath + 'idle.gif', format='gif -index %i' % (i)) for i in range(IDLE_FRAMES)]
     panic = [tk.PhotoImage(file=impath + 'panic.gif', format='gif -index %i' % (i)) for i in range(PANIC_FRAMES)]
     water = [tk.PhotoImage(file=impath + 'water.gif', format='gif -index %i' % (i)) for i in range(WATER_FRAMES)]
+    pet_width = idle[0].width()
+    pet_height = idle[0].height()
     print("GIF files loaded successfully!")
 except Exception as e:
     print(f"Error loading GIF files: {e}")
     print("Make sure the GIF files exist in the specified directory.")
     exit()
 
+
 # Configure window appearance
 window.config(highlightbackground='black')  # Set background color
 window.overrideredirect(True)  # Remove window decorations
-window.wm_attributes('-transparentcolor', 'green')  # Make black pixels transparent
+window.wm_attributes('-transparentcolor', 'black')  # Make black pixels transparent
 
 # FIXED: Make window always stay on top of other applications
 window.wm_attributes('-topmost', True)
@@ -337,7 +343,7 @@ label.bind("<Button-3>", lambda e: open_setup_window())
 # START THE PROGRAM
 # ==============================================================================
 
-window.geometry(f'100x100+{x}+{y}')
+window.geometry(f'{pet_width}x{pet_height}+{x}+{y}')
 
 # Auto-open setup on first launch
 if config.data.get("last_reset_date") is None:
