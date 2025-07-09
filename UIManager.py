@@ -7,28 +7,147 @@ class UIManager:
         self.pet = pet
 
     def openSetup(self):
+
+        """Popup window to change daily goal and sip size with revamped UI."""
+        # Create top-level window
         win = tk.Toplevel(self.pet.window)
-        win.title("Dew - Setup")
+        win.title("Preferences")
+        win.geometry("1400x1060")
+        win.resizable(False, False)
         win.attributes("-topmost", True)
+        # Ensure it always stays above pet
+        win.lift(self.pet.window)
 
-        tk.Label(win, text = "Daily Goal (ml)").grid(row = 0, column = 0, padx = 10, pady = 5)
-        goalVar = tk.StringVar(value = str(self.pet.config.dailyGoal))
-        tk.Entry(win, textvariable = goalVar, width = 10).grid(row = 0, column = 1, padx = 10, pady = 5)
+        # --------------------------------------------------
+        # Load resources (background GIF + hamster PNG)
+        # --------------------------------------------------
+        try:
+            self.bg_gif_frames = [tk.PhotoImage(file="water logger.gif", format=f"gif -index {i}") for i in range(100)]
+        except Exception:
+            # fallback: single frame
+            self.bg_gif_frames = [tk.PhotoImage(file="water logger.gif")]
+        try:
+            self.hamster_img = tk.PhotoImage(file="water logging hamster.png")
+        except Exception:
+            self.hamster_img = None
 
-        tk.Label(win, text = "Sip Amount (ml)").grid(row = 1, column = 0, padx = 10, pady = 5)
-        sipVar = tk.StringVar(value = str(self.pet.config.sipAmount))
-        tk.Entry(win, textvariable = sipVar, width = 10).grid(row = 1, column = 1, padx = 10, pady = 5)
+        # Display animated background using a label that updates every 100 ms
+        bg_label = tk.Label(win)
+        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-        def save():
-            try:
-                self.pet.config.dailyGoal = int(goalVar.get())
-                self.pet.config.sipAmount = int(sipVar.get())
-                messagebox.showinfo("Saved", "Preferences updated.")
-                win.destroy()
-            except ValueError:
-                messagebox.showerror("Error", "Invalid input")
+        def animate_bg(frame=0):
+            if not win.winfo_exists():
+                return
+            frame = (frame + 1) % len(self.bg_gif_frames)
+            bg_label.configure(image=self.bg_gif_frames[frame])
+            win.after(100, animate_bg, frame)
+        bg_label.configure(image=self.bg_gif_frames[0])
+        animate_bg()
 
-        ttk.Button(win, text = "Save", command = save).grid(row = 2, column = 0, columnspan = 2, pady = 10)
+        # --------------------------------------------------
+        # Load font (Press Start 2P) if installed, else default
+        # --------------------------------------------------
+        try:
+            import tkinter.font as tkfont
+            press_start_font = tkfont.Font(family="Press Start 2P", size=12)
+        except Exception:
+            press_start_font = None
+
+        # --------------------------------------------------
+        # Central panel (semi-transparent)
+        # --------------------------------------------------
+        panel_width = 800
+        panel_height = 600
+        panel_x = (1400 - panel_width) // 2
+        panel_y = (1060 - panel_height) // 2 + 80  # leave space for hamster
+        # Create canvas to draw rounded rectangle panel
+        canvas = tk.Canvas(win, width=panel_width, height=panel_height, highlightthickness=0)
+        canvas.place(x=panel_x, y=panel_y)
+        # Draw rectangle (rounded corners are limited in Tk)
+        canvas.create_rectangle(0, 0, panel_width, panel_height, fill="#f3f3f3", outline="")
+
+        # Frame to hold interactive widgets positioned at the center of panel
+        content = tk.Frame(canvas, bg="#f3f3f3")
+        content.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Hamster image floating above panel
+        if self.hamster_img:
+            hamster_x = (1400 - self.hamster_img.width()) // 2
+            self.hamster_label = tk.Label(win, image=self.hamster_img, bd=0, bg="#f3f3f3")  # transparent bg
+            self.hamster_label.place(x=hamster_x, y=panel_y - self.hamster_img.height() - 10)
+            self.hamster_label.lift()
+
+        # Header text
+        header = tk.Label(content, text="Preferences", bg="#f3f3f3", fg="#000000")
+        if press_start_font:
+            header.configure(font=("Press Start 2P", 20))
+        else:
+            header.configure(font=("Helvetica", 20, "bold"))
+        header.pack(pady=(10, 30))
+
+        # Utility to create labelled slider row
+        def create_slider_row(parent, label_text, unit_text, range_from, range_to, step, default_val):
+            row = tk.Frame(parent, bg="#f3f3f3")
+            row.pack(fill="x", padx=40, pady=20)
+
+            left_lbl = tk.Label(row, text=label_text, bg="#f3f3f3")
+            right_lbl = tk.Label(row, text=unit_text, bg="#f3f3f3")
+            font_def = ("Press Start 2P", 12) if press_start_font else ("Helvetica", 12, "bold")
+            left_lbl.configure(font=font_def)
+            right_lbl.configure(font=font_def)
+            left_lbl.pack(side="left")
+            right_lbl.pack(side="right")
+
+            style_name = f"{label_text.replace(' ', '')}.Horizontal.TScale"
+            style = ttk.Style()
+            style.theme_use("default")
+            style.configure(style_name, troughcolor="#eeeeee", background="#edb36a")
+
+            var = tk.IntVar(value=default_val)
+            scale = ttk.Scale(row, from_=range_from, to=range_to, orient="horizontal", style=style_name, variable=var, length=600)
+            scale.pack(side="bottom", pady=10)
+
+            # Snap to nearest discrete step
+            def snap(event):
+                val = round(var.get() / step) * step
+                var.set(val)
+            scale.bind("<ButtonRelease-1>", snap)
+
+            # Tooltip showing value
+            tooltip = tk.Label(row, text="", bg="#000000", fg="#FFFFFF", padx=4, pady=2)
+            tooltip_font = ("Press Start 2P", 8) if press_start_font else ("Helvetica", 8)
+            tooltip.configure(font=tooltip_font)
+
+            def move_tooltip(event):
+                tooltip.configure(text=f"{var.get()} mL")
+                # Fix y so label stays at constant height above slider
+                tooltip.place(x=event.x, y=event.y)
+            def hide_tooltip(event):
+                tooltip.place_forget()
+            scale.bind("<Motion>", move_tooltip)
+            scale.bind("<Leave>", hide_tooltip)
+            return var
+
+        goal_var = create_slider_row(content, "Daily Goal", "(mL)", 0, 4000, 500, self.pet.config.dailyGoal)
+        sip_var = create_slider_row(content, "Sip Amount", "(mL)", 0, 1000, 250, self.pet.config.sipAmount)
+
+        # Save button
+        save_btn = tk.Button(content, text="Save", bg="#b41c27", fg="#FFFFFF", activebackground="#992026", padx=20, pady=10, bd=0)
+        btn_font = ("Press Start 2P", 12) if press_start_font else ("Helvetica", 12, "bold")
+        save_btn.configure(font=btn_font)
+        save_btn.pack(pady=(40, 10))
+
+        def save_preferences():
+            self.pet.config.dailyGoal = int(goal_var.get())
+            self.pet.config.sipAmount = int(sip_var.get())
+            messagebox.showinfo("Saved", "Preferences updated.")
+            win.destroy()
+        save_btn.configure(command=save_preferences)
+
+
+
+
+
 
     def openLog(self):
         popup = tk.Toplevel(self.pet.window)
