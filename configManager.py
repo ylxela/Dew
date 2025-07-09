@@ -53,7 +53,13 @@ class ConfigManager:
         currDate = date.today().isoformat()
         lastReset = self.data["lastResetDate"]
 
-        if lastReset is not None and lastReset != currDate:
+        # If date not recorded yet, initialise it first
+        if lastReset is None:
+            self.data["lastResetDate"] = currDate
+            self.save()
+            lastReset = currDate
+
+        if lastReset != currDate:
             if self.data["currentIntake"] >= self.data["dailyGoal"]:
                 self.data["streak"] += 1
             else:
