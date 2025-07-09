@@ -1,6 +1,8 @@
 import json
 import os
 from datetime import date
+import time
+
 
 DEFAULT_DAILY_GOAL = 2000
 DEFAULT_SIP_AMOUNT = 250
@@ -10,12 +12,13 @@ DEFAULT_CONFIG = {
     "sipAmount": DEFAULT_SIP_AMOUNT,
     "currentIntake": 0,
     "lastResetDate": None,
-    "streak": 0
+    "streak": 0,
+    "lastIntakeTime": 0
 }
 
 class ConfigManager:
     """Manages application configuration & daily water intake tracking."""
-    
+
     def __init__(self):
         self.data = DEFAULT_CONFIG.copy()
         self.load()
@@ -44,6 +47,16 @@ class ConfigManager:
         self.save()
 
     @property
+    def lastIntakeTime(self) -> float:
+        return self.data.get("lastIntakeTime", 0)
+
+    @lastIntakeTime.setter
+    def lastIntakeTime(self, value: float):
+        """Set the timestamp of last intake."""
+        self.data["lastIntakeTime"] = value
+        self.save()
+
+    @property
     def currentIntake(self) -> int:
         """Get current daily intake in mL"""
         return self.data["currentIntake"]
@@ -51,6 +64,7 @@ class ConfigManager:
     def addIntake(self, amount: int):
         """Add water intake amount and save configuration."""
         self.data["currentIntake"] += amount
+        self.data["lastIntakeTime"] = time.time()
         self.save()
 
     @property

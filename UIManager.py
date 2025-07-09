@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import time
-import threading
 
 POPUP_INTERVAL = 1 * 5      # 1 hour in seconds
 POPUP_DURATION = 1 * 3       # 2 minutes in seconds
@@ -10,6 +9,8 @@ POPUP_DURATION = 1 * 3       # 2 minutes in seconds
 class UIManager:
     def __init__(self, pet):
         self.pet = pet
+        self.popUpVisible = False
+        self.popup = None
 
     def openSetup(self):
         win = tk.Toplevel(self.pet.window)
@@ -52,6 +53,7 @@ class UIManager:
 
         def logWater():
             self.pet.config.addIntake(self.pet.config.sipAmount)
+            self.pet.config.lastIntakeTime = time.time()
             progress["value"] = self.pet.config.currentIntake
             progLabel.config(text = f"{self.pet.config.currentIntake}/{self.pet.config.dailyGoal} ml")
             if self.pet.config.currentIntake >= self.pet.config.dailyGoal:
@@ -61,41 +63,54 @@ class UIManager:
         ttk.Button(popup, text="Drink", command=logWater).pack(pady=5)
 
     def runReminder(self):
-        self.pet.window.after(POPUP_INTERVAL * 1000, self.show_popup)
+        self.pet.window.after(POPUP_INTERVAL * 1000, self.showPopUp)
 
-    def show_popup(self):
-        if self.popup_visible:
+    def showPopUp(self):
+        if self.popUpVisible:
+            return
+
+        last_time = self.pet.config.lastIntakeTime or 0  # handle None
+        time_since_last_intake = time.time() - last_time
+
+        if time_since_last_intake < POPUP_INTERVAL:
+            self.pet.window.after(1000, self.runReminder)
             return
 
         self.popup = tk.Toplevel(self.pet.window)
         self.popup.title("Hourly Reminder")
         self.popup.overrideredirect(True)
         self.popup.attributes("-topmost", True)
-        self.popup.configure(bg="lightyellow")
 
-        label = tk.Label(self.popup, text="Time to drink water!", font=("Arial", 14), bg="lightyellow")
-        label.pack(expand=True, fill="both")
+        transparent_color = "magenta"
+        self.popup.configure(bg=transparent_color)
+        self.popup.attributes("-transparentcolor", transparent_color)
 
-        self.popup_visible = True
+        photo = tk.PhotoImage(file="thirsty.gif")
+        self.photo = photo.subsample(5, 5)
+
+        image_label = tk.Label(self.popup, image=self.photo, bg=transparent_color)
+        image_label.pack()
+
+        self.popUpVisible = True
         self.updatePopUpPosition()
 
         self.pet.window.after(POPUP_DURATION * 1000, self.close_popup)
+        self.pet.window.after(POPUP_INTERVAL * 1000, self.showPopUp)
 
-        self.pet.window.after(POPUP_INTERVAL * 1000, self.show_popup)
 
     def updatePopUpPosition(self):
-        if not self.popup or not self.popup_visible:
+        if not self.popup or not self.popUpVisible:
             return
 
-        popup_width = 300
-        popup_height = 150
+        popup_width = 200
+        popup_height = 100
 
         pet_x = self.pet.x
         pet_y = self.pet.y
         pet_width = self.pet.petWidth
 
         popup_x = pet_x + (pet_width // 2) - (popup_width // 2)
-        popup_y = pet_y - popup_height - 10
+        popup_y = pet_y - popup_height + 50
 
         self.popup.geometry(f"{popup_width}x{popup_height}+{popup_x}+{popup_y}")
 
@@ -106,4 +121,4 @@ class UIManager:
         if self.popup:
             self.popup.destroy()
             self.popup = None
-            self.popup_visible = False
+            self.popUpVisible = False
