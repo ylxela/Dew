@@ -26,7 +26,6 @@ class DesktopPet:
         self.petHeight = 0
         self.config = None
         self.setupWindow()
-        self.uiManager.runReminder()
 
     def setupWindow(self):
         self.window = tk.Tk()
@@ -86,4 +85,3 @@ class DesktopPet:
 
 pet = DesktopPet()
 pet.run()
-

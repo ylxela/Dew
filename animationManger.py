@@ -9,6 +9,7 @@ STATE_HOVER = 2
 SPEED_IDLE = 400
 SPEED_PANIC = 100
 SPEED_HOVER = 150
+SCALE_FACTOR = 2
 
 class AnimationManager:
     def __init__(self):
@@ -21,11 +22,11 @@ class AnimationManager:
 
     def loadAnimations(self):
         try:
-            self.idleFrames = [tk.PhotoImage(file = 'idle.gif', format = 'gif -index %i' % i)
-                               for i in range(NUM_FRAMES_IDLE)]
-            self.panicFrames = [tk.PhotoImage(file = 'panic.gif', format = 'gif -index %i' % i)
+            self.idleFrames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
+                            for i in range(NUM_FRAMES_IDLE)]
+            self.panicFrames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
                                 for i in range(NUM_FRAMES_PANIC)]
-            self.hoverFrames = [tk.PhotoImage(file = 'hover.gif', format = 'gif -index %i' % i)
+            self.hoverFrames = [tk.PhotoImage(file='hover.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
                                 for i in range(NUM_FRAMES_HOVER)]
         except Exception as e:
             raise FileNotFoundError(f"{e} not found")
