@@ -5,8 +5,8 @@ from configManager import ConfigManager
 from animationManger import AnimationManager
 from mouseManager import MouseHandler
 
-FRAME_WIDTH = 100
-FRAME_HEIGHT = 150
+FRAME_WIDTH = 20
+FRAME_HEIGHT = 600
 DELAY_SETUP_WINDOW = 500
 DELAY_FRAME_STEP = 1
 
