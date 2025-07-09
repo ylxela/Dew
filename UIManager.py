@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import time
-from PIL import Image, ImageTk
+import os
 
 POPUP_INTERVAL = 1 * 5      # 1 hour in seconds
 POPUP_DURATION = 1 * 3       # 2 minutes in seconds
@@ -13,10 +13,66 @@ class UIManager:
         self.popUpVisible = False
         self.popup = None
         self.preferences_window = None
+        self.bg_frames = []
+        self.bg_current_frame = 0
+        self.bg_canvas = None
+        self.bg_image_id = None
+        self.bg_animation_running = False
+
+    def load_background_frames(self):
+        """Load all frames of the background GIF"""
+        try:
+            self.bg_frames = []
+            frame_index = 0
+            
+            while True:
+                try:
+                    frame = tk.PhotoImage(file='assets/water logger.gif', format='gif -index %i' % frame_index)
+                    # Scale the frame to fit the window (1400x1060)
+                    # Note: PhotoImage zoom might not give exact dimensions, but it will scale proportionally
+                    scaled_frame = frame.zoom(2, 2)  # Adjust scaling factor as needed
+                    self.bg_frames.append(scaled_frame)
+                    frame_index += 1
+                except tk.TclError:
+                    # No more frames
+                    break
+            
+            return len(self.bg_frames) > 0
+        except Exception as e:
+            print(f"Error loading background frames: {e}")
+            return False
+
+    def animate_background(self):
+        """Animate the background GIF"""
+        if not self.bg_animation_running or not self.bg_frames or not self.bg_canvas:
+            return
+            
+        # Update the canvas with the current frame
+        if self.bg_image_id:
+            self.bg_canvas.delete(self.bg_image_id)
+            
+        current_frame = self.bg_frames[self.bg_current_frame]
+        self.bg_image_id = self.bg_canvas.create_image(700, 530, image=current_frame)
+        
+        # Move to next frame
+        self.bg_current_frame = (self.bg_current_frame + 1) % len(self.bg_frames)
+        
+        # Schedule next frame update (adjust timing as needed)
+        if self.preferences_window:
+            self.preferences_window.after(200, self.animate_background)
+
+    def stop_background_animation(self):
+        """Stop the background animation"""
+        self.bg_animation_running = False
+        self.bg_frames = []
+        self.bg_current_frame = 0
+        self.bg_canvas = None
+        self.bg_image_id = None
 
     def openSetup(self):
         # Close existing window if it exists
         if self.preferences_window is not None:
+            self.stop_background_animation()
             self.preferences_window.destroy()
             
         # Create fixed window with specified dimensions
@@ -26,34 +82,46 @@ class UIManager:
         self.preferences_window.resizable(False, False)
         self.preferences_window.attributes("-topmost", True)
         
-        # Load and set background image
+        # Try to load background image with fallback
         try:
-            bg_image = Image.open("assets/water logger.gif")
-            bg_image = bg_image.resize((1400, 1060), Image.Resampling.LANCZOS)
-            self.bg_photo = ImageTk.PhotoImage(bg_image)
-            
-            # Create canvas for background
-            canvas = tk.Canvas(self.preferences_window, width=1400, height=1060, highlightthickness=0)
-            canvas.pack(fill=tk.BOTH, expand=True)
-            canvas.create_image(0, 0, anchor=tk.NW, image=self.bg_photo)
+            # Check if background image exists and try to load animated frames
+            if os.path.exists("assets/water logger.gif") and self.load_background_frames():
+                # Create canvas for animated background
+                self.bg_canvas = tk.Canvas(self.preferences_window, width=1400, height=1060, highlightthickness=0)
+                self.bg_canvas.pack(fill=tk.BOTH, expand=True)
+                
+                # Start background animation
+                self.bg_animation_running = True
+                self.animate_background()
+                
+            else:
+                # Use solid color background if image doesn't exist or loading fails
+                self.bg_canvas = tk.Canvas(self.preferences_window, width=1400, height=1060, highlightthickness=0, bg='#4A90E2')
+                self.bg_canvas.pack(fill=tk.BOTH, expand=True)
+                print("Could not load animated background, using solid color")
             
             # Create main frame for preferences
-            main_frame = tk.Frame(canvas, bg='#E8D5B7', padx=40, pady=40)
+            main_frame = tk.Frame(self.bg_canvas, bg='#E8D5B7', padx=40, pady=40, relief=tk.RAISED, borderwidth=2)
             main_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
             
-            # Configure custom font
+            # Configure custom font with fallback
             try:
                 custom_font = ("Press Start 2P", 16)
                 label_font = ("Press Start 2P", 14)
                 button_font = ("Press Start 2P", 12)
+                title_font = ("Press Start 2P", 20)
+                # Test if the font actually works
+                test_label = tk.Label(main_frame, text="Test", font=custom_font)
+                test_label.destroy()
             except:
                 # Fallback fonts if Press Start 2P is not available
                 custom_font = ("Courier", 16, "bold")
                 label_font = ("Courier", 14, "bold")
                 button_font = ("Courier", 12, "bold")
+                title_font = ("Courier", 20, "bold")
             
             # Title
-            title_label = tk.Label(main_frame, text="Preferences", font=("Press Start 2P", 20) if custom_font else ("Courier", 20, "bold"), 
+            title_label = tk.Label(main_frame, text="Preferences", font=title_font, 
                                  bg='#E8D5B7', fg='#2B2B2B')
             title_label.pack(pady=(0, 30))
             
@@ -111,6 +179,7 @@ class UIManager:
                     self.pet.config.dailyGoal = self.goal_var.get()
                     self.pet.config.sipAmount = self.sip_var.get()
                     messagebox.showinfo("Saved", "Preferences updated.")
+                    self.stop_background_animation()
                     self.preferences_window.destroy()
                     self.preferences_window = None
                 except Exception as e:
@@ -122,20 +191,23 @@ class UIManager:
             
             # Handle window close
             def on_closing():
+                self.stop_background_animation()
                 self.preferences_window.destroy()
                 self.preferences_window = None
             
             self.preferences_window.protocol("WM_DELETE_WINDOW", on_closing)
             
         except Exception as e:
-            # Fallback to simple window if background image fails
-            messagebox.showerror("Error", f"Could not load background image: {str(e)}")
-            self.preferences_window.destroy()
+            # Fallback to simple window if anything fails
+            messagebox.showerror("Error", f"Could not create preferences window: {str(e)}")
+            self.stop_background_animation()
+            if self.preferences_window:
+                self.preferences_window.destroy()
             self.preferences_window = None
             self.openSetupFallback()
 
     def openSetupFallback(self):
-        """Fallback preferences window if background image fails"""
+        """Fallback preferences window if main window fails"""
         self.preferences_window = tk.Toplevel(self.pet.window)
         self.preferences_window.title("Dew - Preferences")
         self.preferences_window.geometry("500x300")
