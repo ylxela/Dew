@@ -1,11 +1,18 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+import time
+import threading
+
+POPUP_INTERVAL = 1 * 5      # 1 hour in seconds
+POPUP_DURATION = 1 * 3       # 2 minutes in seconds
 
 class UIManager:
     """Manages UI windows and dialogs."""
 
     def __init__(self, pet_instance):
         self.pet = pet_instance
+        self.popup = None
+        self.popup_visible = False
 
     def open_setup_window(self):
         """Open setup window for configuring daily goal and sip size."""
@@ -59,3 +66,53 @@ class UIManager:
             popup.destroy()
 
         ttk.Button(popup, text="Drink", command=logWater).pack(pady=5)
+
+    def runReminder(self):
+        self.pet.window.after(POPUP_INTERVAL * 1000, self.show_popup)
+
+    def show_popup(self):
+        if self.popup_visible:
+            return  # Don't stack popups
+
+        self.popup = tk.Toplevel(self.pet.window)
+        self.popup.title("Hourly Reminder")
+        self.popup.overrideredirect(True)
+        self.popup.attributes("-topmost", True)
+        self.popup.configure(bg="lightyellow")
+
+        label = tk.Label(self.popup, text="Time to drink water!", font=("Arial", 14), bg="lightyellow")
+        label.pack(expand=True, fill="both")
+
+        self.popup_visible = True
+        self.update_popup_position()
+
+        # Close after duration
+        self.pet.window.after(POPUP_DURATION * 1000, self.close_popup)
+
+        # Schedule next popup
+        self.pet.window.after(POPUP_INTERVAL * 1000, self.show_popup)
+
+    def update_popup_position(self):
+        if not self.popup or not self.popup_visible:
+            return
+
+        popup_width = 300
+        popup_height = 150
+
+        pet_x = self.pet.x
+        pet_y = self.pet.y
+        pet_width = self.pet.petWidth
+
+        popup_x = pet_x + (pet_width // 2) - (popup_width // 2)
+        popup_y = pet_y - popup_height - 10
+
+        self.popup.geometry(f"{popup_width}x{popup_height}+{popup_x}+{popup_y}")
+
+        # Keep tracking position
+        self.pet.window.after(100, self.update_popup_position)
+
+    def close_popup(self):
+        if self.popup:
+            self.popup.destroy()
+            self.popup = None
+            self.popup_visible = False

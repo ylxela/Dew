@@ -19,12 +19,13 @@ class AnimationManager:
 
     def load_animations(self):
         """Load animation frames from GIF files."""
+        scale_factor = 2
         try:
-            self.idleFrames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i)
-                               for i in range(self.IDLE_FRAMES)]
-            self.panicFrames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i)
+            self.idleFrames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i).zoom(scale_factor, scale_factor)
+                            for i in range(self.IDLE_FRAMES)]
+            self.panicFrames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i).zoom(scale_factor, scale_factor)
                                 for i in range(self.PANIC_FRAMES)]
-            self.hoverFrames = [tk.PhotoImage(file='hover.gif', format='gif -index %i' % i)
+            self.hoverFrames = [tk.PhotoImage(file='hover.gif', format='gif -index %i' % i).zoom(scale_factor, scale_factor)
                                 for i in range(self.HOVER_FRAMES)]
         except Exception as e:
             raise FileNotFoundError(f"Error loading GIF files: {e}. Make sure the GIF files exist in the directory.")

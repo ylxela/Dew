@@ -8,7 +8,7 @@ from mouseManager import MouseHandler
 
 class DesktopPet:
     """Main desktop pet application class."""
-    
+
     def __init__(self):
         # Position variables
         self.x = 100
@@ -28,6 +28,7 @@ class DesktopPet:
         self.config = None
 
         self.setupWindow()
+        self.uiManager.runReminder()
 
     def setupWindow(self):
         """Initialize the main window and components."""
