@@ -14,6 +14,8 @@ DEFAULT_CONFIG = {
 }
 
 class ConfigManager:
+    """Manages application configuration & daily water intake tracking."""
+    
     def __init__(self):
         self.data = DEFAULT_CONFIG.copy()
         self.load()
@@ -21,54 +23,57 @@ class ConfigManager:
 
     @property
     def dailyGoal(self) -> int:
+        """Get daily water intake goal in mL"""
         return self.data["dailyGoal"]
 
     @dailyGoal.setter
     def dailyGoal(self, value: int):
+        """Set daily water intake goal in mL"""
         self.data["dailyGoal"] = value
         self.save()
 
     @property
     def sipAmount(self) -> int:
+        """Get sip amount in mL"""
         return self.data["sipAmount"]
 
     @sipAmount.setter
     def sipAmount(self, value: int):
+        """Set sip amount in mL"""
         self.data["sipAmount"] = value
         self.save()
 
     @property
     def currentIntake(self) -> int:
+        """Get current daily intake in mL"""
         return self.data["currentIntake"]
 
     def addIntake(self, amount: int):
+        """Add water intake amount and save configuration."""
         self.data["currentIntake"] += amount
         self.save()
 
     @property
     def streak(self) -> int:
+        """Get current streak of consecutive days meeting goal."""
         return self.data["streak"]
 
     def resetOnNewDay(self):
-        currDate = date.today().isoformat()
-        lastReset = self.data["lastResetDate"]
+        """Reset daily intake and update streak on new day."""
+        currentDate = date.today().isoformat()
+        lastResetDate = self.data["lastResetDate"]
 
-        # If date not recorded yet, initialise it first
-        if lastReset is None:
-            self.data["lastResetDate"] = currDate
-            self.save()
-            lastReset = currDate
-
-        if lastReset != currDate:
+        if lastResetDate is not None and lastResetDate != currentDate:
             if self.data["currentIntake"] >= self.data["dailyGoal"]:
                 self.data["streak"] += 1
             else:
                 self.data["streak"] = 0
             self.data["currentIntake"] = 0
-            self.data["lastResetDate"] = currDate
+            self.data["lastResetDate"] = currentDate
             self.save()
 
     def load(self):
+        """Load configuration from file."""
         if os.path.exists(PATH_CONFIG):
             try:
                 with open(PATH_CONFIG, "r") as fp:
@@ -81,6 +86,7 @@ class ConfigManager:
             self.save()
 
     def save(self):
+        """Save configuration to file."""
         try:
             with open(PATH_CONFIG, "w") as fp:
                 json.dump(self.data, fp)
