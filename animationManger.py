@@ -22,11 +22,11 @@ class AnimationManager:
 
     def loadAnimations(self):
         try:
-            self.idleFrames = [tk.PhotoImage(file='idle.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
+            self.idleFrames = [tk.PhotoImage(file='assets/idle.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
                             for i in range(NUM_FRAMES_IDLE)]
-            self.panicFrames = [tk.PhotoImage(file='panic.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
+            self.panicFrames = [tk.PhotoImage(file='assets/panic.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
                                 for i in range(NUM_FRAMES_PANIC)]
-            self.hoverFrames = [tk.PhotoImage(file='hover.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
+            self.hoverFrames = [tk.PhotoImage(file='assets/hover.gif', format='gif -index %i' % i).zoom(SCALE_FACTOR, SCALE_FACTOR)
                                 for i in range(NUM_FRAMES_HOVER)]
         except Exception as e:
             raise FileNotFoundError(f"{e} not found")

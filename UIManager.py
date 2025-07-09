@@ -24,16 +24,8 @@ class UIManager:
         # Ensure it always stays above pet
         win.lift(self.pet.window)
 
-        # --------------------------------------------------
-        # Load resources (background GIF + hamster PNG)
-        # --------------------------------------------------
-        try:
-            self.bg_gif_frames = [tk.PhotoImage(file="water logger.gif", format=f"gif -index {i}") for i in range(100)]
-        except Exception:
-            # fallback: single frame
-            self.bg_gif_frames = [tk.PhotoImage(file="water logger.gif")]
-        try:
-            self.hamster_img = tk.PhotoImage(file="water logging hamster.png")
+        # --------------------------------------------------c
+            self.hamster_img = tk.PhotoImage(file="assets/water logging hamster.png")
         except Exception:
             self.hamster_img = None
 
@@ -205,7 +197,7 @@ class UIManager:
         self.popup.configure(bg=transparent_color)
         self.popup.attributes("-transparentcolor", transparent_color)
 
-        photo = tk.PhotoImage(file="thirsty.gif")
+        photo = tk.PhotoImage(file="assets/thirsty.gif")
         self.photo = photo.subsample(5, 5)
 
         image_label = tk.Label(self.popup, image=self.photo, bg=transparent_color)
