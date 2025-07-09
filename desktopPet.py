@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk, messagebox  # ttk for progress bar
 from UIManager import UIManager
 from behaviourManager import BehaviourManager
 from configManager import ConfigManager
