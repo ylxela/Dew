@@ -86,3 +86,4 @@ class DesktopPet:
 
 pet = DesktopPet()
 pet.run()
+

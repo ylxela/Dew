@@ -15,9 +15,9 @@ class UIManager:
         self.preferences_window = None
         self.bg_frames = []
         self.bg_current_frame = 0
-        self.bg_canvas = None
-        self.bg_image_id = None
+        self.bg_label = None
         self.bg_animation_running = False
+        self.hamster_img = None
 
     def load_background_frames(self):
         """Load all frames of the background GIF"""
@@ -29,7 +29,6 @@ class UIManager:
                 try:
                     frame = tk.PhotoImage(file='assets/water logger.gif', format='gif -index %i' % frame_index)
                     # Scale the frame to fit the window (1400x1060)
-                    # Note: PhotoImage zoom might not give exact dimensions, but it will scale proportionally
                     scaled_frame = frame.zoom(2, 2)  # Adjust scaling factor as needed
                     self.bg_frames.append(scaled_frame)
                     frame_index += 1
@@ -44,167 +43,166 @@ class UIManager:
 
     def animate_background(self):
         """Animate the background GIF"""
-        if not self.bg_animation_running or not self.bg_frames or not self.bg_canvas:
+        if not self.bg_animation_running or not self.bg_frames or not self.bg_label:
             return
             
-        # Update the canvas with the current frame
-        if self.bg_image_id:
-            self.bg_canvas.delete(self.bg_image_id)
-            
+        # Update the label with the current frame
         current_frame = self.bg_frames[self.bg_current_frame]
-        self.bg_image_id = self.bg_canvas.create_image(700, 530, image=current_frame)
+        self.bg_label.configure(image=current_frame)
         
         # Move to next frame
         self.bg_current_frame = (self.bg_current_frame + 1) % len(self.bg_frames)
         
-        # Schedule next frame update (adjust timing as needed)
-        if self.preferences_window:
+        # Schedule next frame update
+        if self.preferences_window and self.preferences_window.winfo_exists():
             self.preferences_window.after(200, self.animate_background)
 
     def stop_background_animation(self):
         """Stop the background animation"""
         self.bg_animation_running = False
-        self.bg_frames = []
         self.bg_current_frame = 0
-        self.bg_canvas = None
-        self.bg_image_id = None
+        self.bg_label = None
 
     def openSetup(self):
+        """Popup window to change daily goal and sip size with revamped UI."""
         # Close existing window if it exists
         if self.preferences_window is not None:
             self.stop_background_animation()
             self.preferences_window.destroy()
             
-        # Create fixed window with specified dimensions
+        # Create top-level window
         self.preferences_window = tk.Toplevel(self.pet.window)
-        self.preferences_window.title("Dew - Preferences")
+        self.preferences_window.title("Preferences")
         self.preferences_window.geometry("1400x1060")
         self.preferences_window.resizable(False, False)
         self.preferences_window.attributes("-topmost", True)
-        
-        # Try to load background image with fallback
+        # Ensure it always stays above pet
+        self.preferences_window.lift(self.pet.window)
+
+        # Load hamster image
         try:
-            # Check if background image exists and try to load animated frames
-            if os.path.exists("assets/water logger.gif") and self.load_background_frames():
-                # Create canvas for animated background
-                self.bg_canvas = tk.Canvas(self.preferences_window, width=1400, height=1060, highlightthickness=0)
-                self.bg_canvas.pack(fill=tk.BOTH, expand=True)
-                
-                # Start background animation
-                self.bg_animation_running = True
-                self.animate_background()
-                
-            else:
-                # Use solid color background if image doesn't exist or loading fails
-                self.bg_canvas = tk.Canvas(self.preferences_window, width=1400, height=1060, highlightthickness=0, bg='#4A90E2')
-                self.bg_canvas.pack(fill=tk.BOTH, expand=True)
-                print("Could not load animated background, using solid color")
+            self.hamster_img = tk.PhotoImage(file="assets/water logging hamster.png")
+        except Exception:
+            self.hamster_img = None
+
+        # Set up animated background
+        if os.path.exists("assets/water logger.gif") and self.load_background_frames():
+            # Display animated background using a label that updates
+            self.bg_label = tk.Label(self.preferences_window)
+            self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
             
-            # Create main frame for preferences
-            main_frame = tk.Frame(self.bg_canvas, bg='#E8D5B7', padx=40, pady=40, relief=tk.RAISED, borderwidth=2)
-            main_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-            
-            # Configure custom font with fallback
-            try:
-                custom_font = ("Press Start 2P", 16)
-                label_font = ("Press Start 2P", 14)
-                button_font = ("Press Start 2P", 12)
-                title_font = ("Press Start 2P", 20)
-                # Test if the font actually works
-                test_label = tk.Label(main_frame, text="Test", font=custom_font)
-                test_label.destroy()
-            except:
-                # Fallback fonts if Press Start 2P is not available
-                custom_font = ("Courier", 16, "bold")
-                label_font = ("Courier", 14, "bold")
-                button_font = ("Courier", 12, "bold")
-                title_font = ("Courier", 20, "bold")
-            
-            # Title
-            title_label = tk.Label(main_frame, text="Preferences", font=title_font, 
-                                 bg='#E8D5B7', fg='#2B2B2B')
-            title_label.pack(pady=(0, 30))
-            
-            # Daily Goal Section
-            goal_frame = tk.Frame(main_frame, bg='#E8D5B7')
-            goal_frame.pack(fill=tk.X, pady=10)
-            
-            goal_label = tk.Label(goal_frame, text="Daily Goal", font=label_font, bg='#E8D5B7', fg='#2B2B2B')
-            goal_label.pack(anchor=tk.W)
-            
-            # Goal value display
-            goal_value_frame = tk.Frame(goal_frame, bg='#E8D5B7')
-            goal_value_frame.pack(fill=tk.X, pady=5)
-            
-            self.goal_var = tk.IntVar(value=self.pet.config.dailyGoal)
-            goal_value_label = tk.Label(goal_value_frame, textvariable=self.goal_var, font=custom_font, bg='#E8D5B7', fg='#2B2B2B')
-            goal_value_label.pack(side=tk.LEFT)
-            
-            goal_unit_label = tk.Label(goal_value_frame, text="(mL)", font=label_font, bg='#E8D5B7', fg='#2B2B2B')
-            goal_unit_label.pack(side=tk.LEFT, padx=(10, 0))
-            
-            # Goal slider
-            goal_slider = tk.Scale(goal_frame, from_=0, to=4000, resolution=500, orient=tk.HORIZONTAL, 
-                                 length=400, variable=self.goal_var, font=label_font, bg='#E8D5B7', 
-                                 fg='#2B2B2B', highlightbackground='#E8D5B7', troughcolor='#D4B896')
-            goal_slider.pack(fill=tk.X, pady=5)
-            
-            # Sip Amount Section
-            sip_frame = tk.Frame(main_frame, bg='#E8D5B7')
-            sip_frame.pack(fill=tk.X, pady=10)
-            
-            sip_label = tk.Label(sip_frame, text="Sip Amount", font=label_font, bg='#E8D5B7', fg='#2B2B2B')
-            sip_label.pack(anchor=tk.W)
-            
-            # Sip value display
-            sip_value_frame = tk.Frame(sip_frame, bg='#E8D5B7')
-            sip_value_frame.pack(fill=tk.X, pady=5)
-            
-            self.sip_var = tk.IntVar(value=self.pet.config.sipAmount)
-            sip_value_label = tk.Label(sip_value_frame, textvariable=self.sip_var, font=custom_font, bg='#E8D5B7', fg='#2B2B2B')
-            sip_value_label.pack(side=tk.LEFT)
-            
-            sip_unit_label = tk.Label(sip_value_frame, text="(mL)", font=label_font, bg='#E8D5B7', fg='#2B2B2B')
-            sip_unit_label.pack(side=tk.LEFT, padx=(10, 0))
-            
-            # Sip slider
-            sip_slider = tk.Scale(sip_frame, from_=0, to=1000, resolution=500, orient=tk.HORIZONTAL, 
-                                length=400, variable=self.sip_var, font=label_font, bg='#E8D5B7', 
-                                fg='#2B2B2B', highlightbackground='#E8D5B7', troughcolor='#D4B896')
-            sip_slider.pack(fill=tk.X, pady=5)
-            
-            # Save button
-            def save():
-                try:
-                    self.pet.config.dailyGoal = self.goal_var.get()
-                    self.pet.config.sipAmount = self.sip_var.get()
-                    messagebox.showinfo("Saved", "Preferences updated.")
-                    self.stop_background_animation()
-                    self.preferences_window.destroy()
-                    self.preferences_window = None
-                except Exception as e:
-                    messagebox.showerror("Error", f"Failed to save preferences: {str(e)}")
-            
-            save_button = tk.Button(main_frame, text="Save", command=save, font=button_font, 
-                                  bg='#B85450', fg='white', padx=30, pady=10, relief=tk.FLAT)
-            save_button.pack(pady=20)
-            
-            # Handle window close
-            def on_closing():
-                self.stop_background_animation()
-                self.preferences_window.destroy()
-                self.preferences_window = None
-            
-            self.preferences_window.protocol("WM_DELETE_WINDOW", on_closing)
-            
-        except Exception as e:
-            # Fallback to simple window if anything fails
-            messagebox.showerror("Error", f"Could not create preferences window: {str(e)}")
+            # Start background animation
+            self.bg_animation_running = True
+            self.animate_background()
+        else:
+            # Fallback background color
+            self.preferences_window.configure(bg='#4A90E2')
+
+        # Load font (Press Start 2P) if installed, else default
+        try:
+            import tkinter.font as tkfont
+            press_start_font = tkfont.Font(family="Press Start 2P", size=12)
+        except Exception:
+            press_start_font = None
+
+        # Central panel (semi-transparent)
+        panel_width = 800
+        panel_height = 600
+        panel_x = (1400 - panel_width) // 2
+        panel_y = (1060 - panel_height) // 2 + 80  # leave space for hamster
+        # Create canvas to draw rounded rectangle panel
+        canvas = tk.Canvas(self.preferences_window, width=panel_width, height=panel_height, highlightthickness=0)
+        canvas.place(x=panel_x, y=panel_y)
+        # Draw rectangle (rounded corners are limited in Tk)
+        canvas.create_rectangle(0, 0, panel_width, panel_height, fill="#f3f3f3", outline="")
+
+        # Frame to hold interactive widgets positioned at the center of panel
+        content = tk.Frame(canvas, bg="#f3f3f3")
+        content.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Hamster image floating above panel
+        if self.hamster_img:
+            hamster_x = (1400 - self.hamster_img.width()) // 2
+            self.hamster_label = tk.Label(self.preferences_window, image=self.hamster_img, bd=0, bg="#f3f3f3")
+            self.hamster_label.place(x=hamster_x, y=panel_y - self.hamster_img.height() - 10)
+            self.hamster_label.lift()
+
+        # Header text
+        header = tk.Label(content, text="Preferences", bg="#f3f3f3", fg="#000000")
+        if press_start_font:
+            header.configure(font=("Press Start 2P", 20))
+        else:
+            header.configure(font=("Helvetica", 20, "bold"))
+        header.pack(pady=(10, 30))
+
+        # Utility to create labelled slider row
+        def create_slider_row(parent, label_text, unit_text, range_from, range_to, step, default_val):
+            row = tk.Frame(parent, bg="#f3f3f3")
+            row.pack(fill="x", padx=40, pady=20)
+
+            left_lbl = tk.Label(row, text=label_text, bg="#f3f3f3")
+            right_lbl = tk.Label(row, text=unit_text, bg="#f3f3f3")
+            font_def = ("Press Start 2P", 12) if press_start_font else ("Helvetica", 12, "bold")
+            left_lbl.configure(font=font_def)
+            right_lbl.configure(font=font_def)
+            left_lbl.pack(side="left")
+            right_lbl.pack(side="right")
+
+            style_name = f"{label_text.replace(' ', '')}.Horizontal.TScale"
+            style = ttk.Style()
+            style.theme_use("default")
+            style.configure(style_name, troughcolor="#eeeeee", background="#edb36a")
+
+            var = tk.IntVar(value=default_val)
+            scale = ttk.Scale(row, from_=range_from, to=range_to, orient="horizontal", style=style_name, variable=var, length=600)
+            scale.pack(side="bottom", pady=10)
+
+            # Snap to nearest discrete step
+            def snap(event):
+                val = round(var.get() / step) * step
+                var.set(val)
+            scale.bind("<ButtonRelease-1>", snap)
+
+            # Tooltip showing value
+            tooltip = tk.Label(row, text="", bg="#000000", fg="#FFFFFF", padx=4, pady=2)
+            tooltip_font = ("Press Start 2P", 8) if press_start_font else ("Helvetica", 8)
+            tooltip.configure(font=tooltip_font)
+
+            def move_tooltip(event):
+                tooltip.configure(text=f"{var.get()} mL")
+                # Fix y so label stays at constant height above slider
+                tooltip.place(x=event.x, y=event.y)
+            def hide_tooltip(event):
+                tooltip.place_forget()
+            scale.bind("<Motion>", move_tooltip)
+            scale.bind("<Leave>", hide_tooltip)
+            return var
+
+        goal_var = create_slider_row(content, "Daily Goal", "(mL)", 0, 4000, 500, self.pet.config.dailyGoal)
+        sip_var = create_slider_row(content, "Sip Amount", "(mL)", 0, 1000, 250, self.pet.config.sipAmount)
+
+        # Save button
+        save_btn = tk.Button(content, text="Save", bg="#b41c27", fg="#FFFFFF", activebackground="#992026", padx=20, pady=10, bd=0)
+        btn_font = ("Press Start 2P", 12) if press_start_font else ("Helvetica", 12, "bold")
+        save_btn.configure(font=btn_font)
+        save_btn.pack(pady=(40, 10))
+
+        def save_preferences():
+            self.pet.config.dailyGoal = int(goal_var.get())
+            self.pet.config.sipAmount = int(sip_var.get())
+            messagebox.showinfo("Saved", "Preferences updated.")
             self.stop_background_animation()
-            if self.preferences_window:
-                self.preferences_window.destroy()
+            self.preferences_window.destroy()
             self.preferences_window = None
-            self.openSetupFallback()
+        save_btn.configure(command=save_preferences)
+
+        # Handle window close
+        def on_closing():
+            self.stop_background_animation()
+            self.preferences_window.destroy()
+            self.preferences_window = None
+        
+        self.preferences_window.protocol("WM_DELETE_WINDOW", on_closing)
 
     def openSetupFallback(self):
         """Fallback preferences window if main window fails"""
