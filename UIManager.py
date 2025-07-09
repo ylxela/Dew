@@ -66,6 +66,7 @@ class UIManager:
         self.pet.window.after(POPUP_INTERVAL * 1000, self.showPopUp)
 
     def showPopUp(self):
+        self.pet.behaviour.setBehaviour(2)
         if self.popUpVisible:
             return
 
@@ -119,6 +120,7 @@ class UIManager:
 
     def close_popup(self):
         if self.popup:
+            self.pet.behaviour.setBehaviour(0)
             self.popup.destroy()
             self.popup = None
             self.popUpVisible = False
